@@ -2,8 +2,7 @@ import middy from '@middy/core';
 import httpJsonBodyParser from '@middy/http-json-body-parser';
 import httpErrorHandler from '@middy/http-error-handler';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult, Handler } from 'aws-lambda';
-import { logger } from '../../utils/logger';
-import { AppError, handleError } from '../../utils/errors';
+import { logger, AppError, handleError } from '../../utils';
 
 // ============================================================================
 // Types
@@ -30,7 +29,7 @@ export type AuthorizedHandler = Handler<AuthorizedEvent, APIGatewayProxyResult>;
 
 const loggingMiddleware = (): middy.MiddlewareObj<APIGatewayProxyEvent, APIGatewayProxyResult> => {
   return {
-    before: async (request) => {
+    before: (request): void => {
       const { event } = request;
       const requestId = event.requestContext.requestId;
       const userId = (event as AuthorizedEvent).requestContext?.authorizer?.claims?.sub;
@@ -41,13 +40,13 @@ const loggingMiddleware = (): middy.MiddlewareObj<APIGatewayProxyEvent, APIGatew
         path: event.path,
       });
     },
-    after: async (request) => {
+    after: (request): void => {
       logger.info('Request completed', {
         statusCode: request.response?.statusCode,
       });
       logger.clearContext();
     },
-    onError: async (request) => {
+    onError: (request): void => {
       logger.error('Request failed', request.error);
       logger.clearContext();
     },
@@ -60,7 +59,7 @@ const loggingMiddleware = (): middy.MiddlewareObj<APIGatewayProxyEvent, APIGatew
 
 const appErrorHandler = (): middy.MiddlewareObj<APIGatewayProxyEvent, APIGatewayProxyResult> => {
   return {
-    onError: async (request) => {
+    onError: (request): void => {
       const { error } = request;
 
       if (error instanceof AppError) {
@@ -80,7 +79,7 @@ const appErrorHandler = (): middy.MiddlewareObj<APIGatewayProxyEvent, APIGateway
 
 const corsMiddleware = (): middy.MiddlewareObj<APIGatewayProxyEvent, APIGatewayProxyResult> => {
   return {
-    after: async (request) => {
+    after: (request): void => {
       if (request.response) {
         request.response.headers = {
           ...request.response.headers,
@@ -90,7 +89,7 @@ const corsMiddleware = (): middy.MiddlewareObj<APIGatewayProxyEvent, APIGatewayP
         };
       }
     },
-    onError: async (request) => {
+    onError: (request): void => {
       if (request.response) {
         request.response.headers = {
           ...request.response.headers,

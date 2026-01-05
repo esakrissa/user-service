@@ -106,7 +106,10 @@ export type UserReactivatedEvent = BaseEvent<'user.reactivated', UserReactivated
 export type EmailAddedEvent = BaseEvent<'email.added', EmailAddedDetail>;
 export type EmailVerifiedEvent = BaseEvent<'email.verified', EmailVerifiedDetail>;
 export type EmailRemovedEvent = BaseEvent<'email.removed', EmailRemovedDetail>;
-export type EmailPrimaryChangedEvent = BaseEvent<'email.primary.changed', EmailPrimaryChangedDetail>;
+export type EmailPrimaryChangedEvent = BaseEvent<
+  'email.primary.changed',
+  EmailPrimaryChangedDetail
+>;
 
 export type UserServiceEvent =
   | UserCreatedEvent

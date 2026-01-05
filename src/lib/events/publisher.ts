@@ -1,6 +1,6 @@
 import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge';
 import { EventType, EventDetailMap, EventMetadata } from '../types';
-import { logger } from '../../utils/logger';
+import { logger } from '../../utils';
 
 // ============================================================================
 // EventBridge Client
@@ -87,11 +87,7 @@ export async function publishUserCreated(
   email: string,
   correlationId: string
 ): Promise<void> {
-  await publishEvent(
-    EventType.USER_CREATED,
-    { userId, email },
-    { correlationId }
-  );
+  await publishEvent(EventType.USER_CREATED, { userId, email }, { correlationId });
 }
 
 export async function publishUserUpdated(
@@ -99,20 +95,9 @@ export async function publishUserUpdated(
   changedFields: string[],
   correlationId: string
 ): Promise<void> {
-  await publishEvent(
-    EventType.USER_UPDATED,
-    { userId, changedFields },
-    { correlationId }
-  );
+  await publishEvent(EventType.USER_UPDATED, { userId, changedFields }, { correlationId });
 }
 
-export async function publishUserDeleted(
-  userId: string,
-  correlationId: string
-): Promise<void> {
-  await publishEvent(
-    EventType.USER_DELETED,
-    { userId },
-    { correlationId }
-  );
+export async function publishUserDeleted(userId: string, correlationId: string): Promise<void> {
+  await publishEvent(EventType.USER_DELETED, { userId }, { correlationId });
 }

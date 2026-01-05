@@ -1,8 +1,7 @@
 import type { PostConfirmationTriggerEvent, PostConfirmationTriggerHandler } from 'aws-lambda';
 import { createUser } from '../../lib/dynamodb';
 import { publishUserCreated } from '../../lib/events';
-import { EmailAlreadyExistsError } from '../../utils/errors';
-import { logger } from '../../utils/logger';
+import { EmailAlreadyExistsError, logger } from '../../utils';
 import { randomUUID } from 'crypto';
 
 // ============================================================================
@@ -54,7 +53,7 @@ export const handler: PostConfirmationTriggerHandler = async (
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const emailId = randomUUID();
-      
+
       // Create user record in DynamoDB
       await createUser(userId, email, emailId);
 

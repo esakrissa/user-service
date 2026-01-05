@@ -19,8 +19,8 @@ import {
   UserNotFoundError,
   EmailAlreadyExistsError,
   VersionConflictError,
-} from '../../utils/errors';
-import { logger } from '../../utils/logger';
+  logger,
+} from '../../utils';
 
 // ============================================================================
 // User Operations
@@ -60,11 +60,7 @@ export async function getUserOrThrow(userId: string): Promise<User> {
 /**
  * Create user with primary email (used by Cognito post-confirmation trigger)
  */
-export async function createUser(
-  userId: string,
-  email: string,
-  emailId: string
-): Promise<User> {
+export async function createUser(userId: string, email: string, emailId: string): Promise<User> {
   const normalizedEmail = email.toLowerCase().trim();
   const now = new Date().toISOString();
 
@@ -176,7 +172,9 @@ export async function updateUser(
 
   // Separate SET and REMOVE parts
   const setParts = updateParts.filter(p => !p.startsWith('REMOVE'));
-  const removeParts = updateParts.filter(p => p.startsWith('REMOVE')).map(p => p.replace('REMOVE ', ''));
+  const removeParts = updateParts
+    .filter(p => p.startsWith('REMOVE'))
+    .map(p => p.replace('REMOVE ', ''));
 
   let updateExpression = `SET ${setParts.join(', ')}`;
   if (removeParts.length > 0) {

@@ -6,7 +6,7 @@ import {
   getUserIdFromEvent,
 } from '../../lib/middleware';
 import { getUserOrThrow } from '../../lib/dynamodb';
-import { logger } from '../../utils/logger';
+import { logger } from '../../utils';
 
 /**
  * GET /users/me

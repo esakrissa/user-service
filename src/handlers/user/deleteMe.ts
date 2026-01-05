@@ -8,7 +8,7 @@ import {
 } from '../../lib/middleware';
 import { getUserOrThrow, softDeleteUser } from '../../lib/dynamodb';
 import { publishUserDeleted } from '../../lib/events';
-import { logger } from '../../utils/logger';
+import { logger } from '../../utils';
 
 /**
  * DELETE /users/me

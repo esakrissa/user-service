@@ -23,11 +23,11 @@ export class AppError extends Error {
       error: this.code,
       message: this.message,
     };
-    
+
     if (this.details) {
       responseBody.details = this.details;
     }
-    
+
     return {
       statusCode: this.statusCode,
       body: JSON.stringify(responseBody),

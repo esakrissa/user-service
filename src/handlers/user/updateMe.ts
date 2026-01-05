@@ -9,8 +9,7 @@ import {
 import { getUserOrThrow, updateUser } from '../../lib/dynamodb';
 import { publishUserUpdated } from '../../lib/events';
 import { updateUserSchema, UpdateUserInput } from '../../lib/types';
-import { BadRequestError } from '../../utils/errors';
-import { logger } from '../../utils/logger';
+import { BadRequestError, logger } from '../../utils';
 
 /**
  * PUT /users/me
