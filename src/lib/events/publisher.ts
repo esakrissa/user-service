@@ -63,7 +63,8 @@ export async function publishEvent<T extends EventType>(
         errorCode: failedEntry?.ErrorCode,
         errorMessage: failedEntry?.ErrorMessage,
       });
-      throw new Error(`Failed to publish event: ${failedEntry?.ErrorMessage}`);
+      // Don't throw - event publishing failures shouldn't break the main operation
+      return;
     }
 
     logger.info('Event published', {
