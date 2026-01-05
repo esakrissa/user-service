@@ -1,0 +1,187 @@
+service: user-service
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  memorySize: 256
+  timeout: 10
+  architecture: arm64
+
+  environment:
+    STAGE: ${self:provider.stage}
+    TABLE_NAME: ${self:custom.tableName}
+    EVENT_BUS_NAME: ${self:custom.eventBusName}
+    LOG_LEVEL: ${self:custom.logLevel.${self:provider.stage}, 'info'}
+
+  iam:
+    role:
+      statements:
+        # DynamoDB permissions
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:Query
+            - dynamodb:TransactWriteItems
+          Resource:
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:custom.tableName}
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:custom.tableName}/index/*
+        # EventBridge permissions
+        - Effect: Allow
+          Action:
+            - events:PutEvents
+          Resource:
+            - arn:aws:events:${self:provider.region}:${aws:accountId}:event-bus/${self:custom.eventBusName}
+
+custom:
+  tableName: ${self:provider.stage}-user-service
+  eventBusName: ${self:provider.stage}-user-service
+  cognitoUserPoolId: ${ssm:/user-service/${self:provider.stage}/cognito-pool-id}
+  cognitoUserPoolArn: arn:aws:cognito-idp:${self:provider.region}:${aws:accountId}:userpool/${self:custom.cognitoUserPoolId}
+  
+  logLevel:
+    dev: debug
+    staging: info
+    prod: info
+
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap: true
+    exclude:
+      - '@aws-sdk/*'
+    target: node20
+    platform: node
+    concurrency: 10
+
+plugins:
+  - serverless-esbuild
+
+functions:
+  # ============================================================================
+  # User API Handlers
+  # ============================================================================
+  
+  getMe:
+    handler: src/handlers/user/getMe.handler
+    description: Get current user profile
+    events:
+      - http:
+          path: /users/me
+          method: get
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: CognitoAuthorizer
+
+  updateMe:
+    handler: src/handlers/user/updateMe.handler
+    description: Update current user profile
+    events:
+      - http:
+          path: /users/me
+          method: put
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: CognitoAuthorizer
+
+  deleteMe:
+    handler: src/handlers/user/deleteMe.handler
+    description: Soft delete current user account
+    events:
+      - http:
+          path: /users/me
+          method: delete
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: CognitoAuthorizer
+
+  # ============================================================================
+  # Cognito Triggers
+  # ============================================================================
+
+  postConfirmation:
+    handler: src/handlers/triggers/postConfirmation.handler
+    description: Cognito post-confirmation trigger - creates user in DynamoDB
+    timeout: 15
+    # Note: The Cognito trigger is configured separately via AWS CLI after deployment
+    # This avoids issues with existing Cognito User Pools
+
+resources:
+  Resources:
+    # ============================================================================
+    # Lambda Permission for Cognito Trigger
+    # ============================================================================
+    
+    PostConfirmationLambdaPermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName:
+          Fn::GetAtt: [PostConfirmationLambdaFunction, Arn]
+        Action: lambda:InvokeFunction
+        Principal: cognito-idp.amazonaws.com
+        SourceArn: ${self:custom.cognitoUserPoolArn}
+
+    # ============================================================================
+    # API Gateway Cognito Authorizer
+    # ============================================================================
+    
+    CognitoAuthorizer:
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: CognitoAuthorizer-${self:provider.stage}
+        Type: COGNITO_USER_POOLS
+        IdentitySource: method.request.header.Authorization
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ProviderARNs:
+          - ${self:custom.cognitoUserPoolArn}
+
+    # ============================================================================
+    # API Gateway CORS for 4XX responses
+    # ============================================================================
+    
+    GatewayResponseDefault4XX:
+      Type: AWS::ApiGateway::GatewayResponse
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: ApiGatewayRestApi
+
+    GatewayResponseDefault5XX:
+      Type: AWS::ApiGateway::GatewayResponse
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+        ResponseType: DEFAULT_5XX
+        RestApiId:
+          Ref: ApiGatewayRestApi
+
+  Outputs:
+    ApiGatewayUrl:
+      Description: API Gateway URL
+      Value:
+        Fn::Sub: https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${self:provider.stage}
+      Export:
+        Name: ${self:service}-${self:provider.stage}-api-url
+
+    CognitoUserPoolId:
+      Description: Cognito User Pool ID
+      Value: ${self:custom.cognitoUserPoolId}
+      Export:
+        Name: ${self:service}-${self:provider.stage}-user-pool-id
