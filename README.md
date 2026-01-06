@@ -15,7 +15,6 @@ A high-scale, Cognito-authenticated User Service built on AWS Serverless Framewo
 
 ```
 user-service/
-├── terraform/           # Infrastructure as Code
 ├── src/
 │   ├── handlers/        # Lambda handlers
 │   │   ├── user/        # User CRUD endpoints
@@ -25,8 +24,10 @@ user-service/
 │   │   ├── events/      # EventBridge publisher
 │   │   ├── middleware/  # Middy middleware
 │   │   └── types/       # TypeScript interfaces
-│   └── utils/           # Utilities
-├── tests/               # Test files
+│   └── utils/           # Utilities (errors, logger)
+├── terraform/           # Infrastructure as Code (Cognito, DynamoDB, EventBridge)
+├── test-app/            # Browser-based test client for the API
+├── tests/               # Unit and integration tests
 ├── serverless.yml       # Serverless configuration
 └── package.json
 ```
@@ -100,6 +101,29 @@ npm run format
 # Build TypeScript
 npm run build
 ```
+
+## Test App
+
+A browser-based test client is included in `test-app/` for testing the API.
+
+### Setup
+
+1. Copy the example config:
+   ```bash
+   cp test-app/config.example.js test-app/config.js
+   ```
+
+2. Edit `test-app/config.js` with your deployed values:
+   ```javascript
+   const CONFIG = {
+     API_ENDPOINT: 'https://your-api-id.execute-api.us-east-1.amazonaws.com/dev',
+     USER_POOL_ID: 'us-east-1_XXXXXXXXX',
+     CLIENT_ID: 'your-cognito-client-id',
+     REGION: 'us-east-1'
+   };
+   ```
+
+3. Open `test-app/index.html` in a browser
 
 ## Design Documentation
 
