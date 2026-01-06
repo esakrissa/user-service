@@ -779,7 +779,7 @@
         <div class="token-section">
           <div class="token-header">
             <div class="token-label">ID Token</div>
-            <button class="token-copy" onclick="copyToken('idToken')">Copy</button>
+            <button class="token-copy" onclick="copyToken('idToken', event)">Copy</button>
           </div>
           <div class="token-value" id="idTokenValue">Sign in to view tokens</div>
         </div>
@@ -787,7 +787,7 @@
         <div class="token-section">
           <div class="token-header">
             <div class="token-label">Access Token</div>
-            <button class="token-copy" onclick="copyToken('accessToken')">Copy</button>
+            <button class="token-copy" onclick="copyToken('accessToken', event)">Copy</button>
           </div>
           <div class="token-value" id="accessTokenValue">Sign in to view tokens</div>
         </div>
@@ -795,7 +795,7 @@
         <div class="token-section">
           <div class="token-header">
             <div class="token-label">Refresh Token</div>
-            <button class="token-copy" onclick="copyToken('refreshToken')">Copy</button>
+            <button class="token-copy" onclick="copyToken('refreshToken', event)">Copy</button>
           </div>
           <div class="token-value" id="refreshTokenValue">Sign in to view tokens</div>
         </div>
@@ -877,7 +877,13 @@
       document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('[id$="Tab"]').forEach(t => t.classList.add('hidden'));
       
-      event.target.classList.add('active');
+      const tabs = document.querySelectorAll('.tabs .tab');
+      tabs.forEach((t, i) => {
+        if ((i === 0 && tab === 'signin') || (i === 1 && tab === 'signup') || (i === 2 && tab === 'confirm')) {
+          t.classList.add('active');
+        }
+      });
+      
       document.getElementById(tab + 'Tab').classList.remove('hidden');
       document.getElementById('authResponse').classList.add('hidden');
     }
@@ -941,8 +947,6 @@
           username: email
         });
         document.getElementById('signinEmail').value = email;
-        showAuthTab('signin');
-        document.querySelector('.tabs .tab').click();
       });
     }
 
@@ -1049,10 +1053,24 @@
         }
 
         const response = await fetch(`${CONFIG.API_ENDPOINT}${path}`, options);
-        const data = await response.json();
+        
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const text = await response.text();
+          data = { message: text || response.statusText };
+        }
         
         return { status: response.status, data };
       } catch (err) {
+        if (err.name === 'TypeError' && err.message === 'Load failed') {
+          return { 
+            error: 'Network error: Unable to reach the server. This may be a CORS issue or the server is unavailable.',
+            hint: 'If this is a validation error, check that your input matches the expected format (e.g., phone: +12345678900)'
+          };
+        }
         return { error: err.message };
       }
     }
@@ -1168,7 +1186,7 @@
     }
 
     // Copy token to clipboard
-    async function copyToken(type) {
+    async function copyToken(type, event) {
       let token;
       if (type === 'idToken') token = idToken;
       else if (type === 'accessToken') token = accessToken;

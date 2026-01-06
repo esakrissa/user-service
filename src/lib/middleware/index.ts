@@ -110,8 +110,8 @@ export function createHandler(handler: AuthorizedHandler): middy.MiddyfiedHandle
   return middy(handler)
     .use(loggingMiddleware())
     .use(httpJsonBodyParser())
-    .use(appErrorHandler())
     .use(corsMiddleware())
+    .use(appErrorHandler())
     .use(httpErrorHandler());
 }
 

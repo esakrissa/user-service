@@ -76,6 +76,38 @@ The service publishes the following events to EventBridge:
 - `user.updated` - When a user updates their profile
 - `user.deleted` - When a user deletes their account
 
+## Email Verification
+
+The service uses AWS SES for sending verification emails during user signup.
+
+### How It Works
+
+1. User signs up with email and password via Cognito
+2. Cognito sends a verification email via SES with a 6-digit code
+3. User enters the code in the test app to verify their email
+4. On successful verification, the PostConfirmation Lambda trigger creates the user profile in DynamoDB
+
+### Configuration
+
+- **Email Provider**: AWS SES (configured as `DEVELOPER` mode in Cognito)
+- **From Address**: `User Service <noreply@your-domain.com>`
+- **Email Template**: Custom HTML with styled verification code
+- **DKIM/SPF**: Enabled for email authentication
+
+### Limitations (Sandbox Mode)
+
+When SES is in sandbox mode:
+- Emails can only be sent to **verified email addresses**
+- Maximum 200 emails per 24-hour period
+- Maximum 1 email per second
+
+To verify a test email address:
+```bash
+aws sesv2 create-email-identity --email-identity your-email@example.com
+```
+
+For production use, request SES production access via AWS Console.
+
 ## Testing
 
 ```bash
