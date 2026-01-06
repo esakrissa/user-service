@@ -106,7 +106,9 @@ npm run build
 
 A browser-based test client is included in `test-app/` for testing the API.
 
-### Setup
+**Live Demo:** [service.esakrissa.com](https://service.esakrissa.com)
+
+### Local Setup
 
 1. Copy the example config:
    ```bash
