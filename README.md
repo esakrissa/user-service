@@ -38,6 +38,7 @@ user-service/
 - AWS CLI configured with credentials
 - Terraform 1.0+
 - Serverless Framework 3.x
+- [AWS MCP Server](https://github.com/awslabs/mcp) (optional, for AI-assisted AWS resource management)
 
 ## Setup
 
