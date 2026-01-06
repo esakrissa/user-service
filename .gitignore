@@ -38,3 +38,4 @@ terraform/.terraform.lock.hcl
 # Secrets
 *.pem
 *.key
+test-app/config.js

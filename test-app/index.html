@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Service</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6/dist/amazon-cognito-identity.min.js"></script>
+  <script src="config.js"></script>
+  <style>
+    :root {
+      --bg: #fafafa;
+      --card: #ffffff;
+      --border: #e5e5e5;
+      --border-focus: #a3a3a3;
+      --text: #171717;
+      --text-secondary: #525252;
+      --text-muted: #a3a3a3;
+      --primary: #171717;
+      --primary-hover: #404040;
+      --success: #16a34a;
+      --success-bg: #f0fdf4;
+      --error: #dc2626;
+      --error-bg: #fef2f2;
+      --warning-bg: #fffbeb;
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-lg: 0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    .header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .user-badge .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--text);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .user-badge button {
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem;
+    }
+
+    .welcome {
+      margin-bottom: 2.5rem;
+    }
+
+    .welcome h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .welcome p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-header h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .card-header p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .card-body {
+      padding: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group:last-of-type {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input::placeholder {
+      color: var(--text-muted);
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+    }
+
+    button {
+      width: 100%;
+      padding: 0.7rem 1.25rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    button.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    button.secondary:hover {
+      background: var(--bg);
+    }
+
+    button.danger {
+      background: var(--error);
+    }
+
+    button.danger:hover {
+      background: #b91c1c;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+      padding: 0 1.5rem;
+    }
+
+    .tab {
+      padding: 1rem 0;
+      margin-right: 1.5rem;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+      width: auto;
+      border-radius: 0;
+      cursor: pointer;
+    }
+
+    .tab:hover {
+      color: var(--text-secondary);
+      background: transparent;
+    }
+
+    .tab.active {
+      color: var(--text);
+      border-bottom-color: var(--text);
+    }
+
+    .response-box {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      font-size: 0.75rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      overflow: auto;
+      max-height: 300px;
+    }
+
+    .response-box pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text-secondary);
+    }
+
+    .response-box.success {
+      background: var(--success-bg);
+    }
+
+    .response-box.success pre {
+      color: var(--success);
+    }
+
+    .response-box.error {
+      background: var(--error-bg);
+    }
+
+    .response-box.error pre {
+      color: var(--error);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .profile-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .profile-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .profile-actions button {
+      padding: 0.6rem 1rem;
+      font-size: 0.8rem;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0.5rem 0;
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.7rem;
+      background: var(--bg);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .status-pill .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .status-pill.active .dot {
+      background: var(--success);
+    }
+
+    .status-pill.active {
+      color: var(--success);
+      background: var(--success-bg);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .profile-card {
+      padding: 1.5rem;
+    }
+
+    .profile-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .profile-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--text);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .profile-details h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .profile-details p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .field-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .field-row:last-child {
+      border-bottom: none;
+    }
+
+    .field-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .field-value {
+      font-size: 0.85rem;
+      color: var(--text);
+      font-weight: 500;
+      word-break: break-all;
+      text-align: right;
+    }
+
+    .action-buttons {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .action-buttons button {
+      flex: 1;
+    }
+
+    .danger-zone {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .danger-zone h4 {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--error);
+      margin-bottom: 0.5rem;
+    }
+
+    .danger-zone p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .danger-zone button {
+      width: auto;
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+    }
+
+    /* Token Footer */
+    .token-footer {
+      margin-top: 3rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+    }
+
+    .token-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .token-toggle:hover {
+      background: var(--bg);
+    }
+
+    .token-toggle h3 {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .token-toggle-icon {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+    }
+
+    .token-toggle.expanded .token-toggle-icon {
+      transform: rotate(180deg);
+    }
+
+    .token-content {
+      display: none;
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .token-content.show {
+      display: block;
+    }
+
+    .token-section {
+      margin-bottom: 1.25rem;
+    }
+
+    .token-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .token-label {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.4rem;
+    }
+
+    .token-value {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.6rem 0.75rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      word-break: break-all;
+      line-height: 1.5;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+
+    .token-value.empty {
+      color: var(--text-muted);
+      font-style: italic;
+      font-family: inherit;
+      font-size: 0.8rem;
+    }
+
+    .token-copy {
+      padding: 0.2rem 0.5rem;
+      font-size: 0.65rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      width: auto;
+      border-radius: 4px;
+    }
+
+    .token-copy:hover {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .token-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.4rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        User Service
+      </div>
+      <div class="user-badge" id="userBadge">
+        <span class="status-pill" id="statusPill">
+          <span class="dot"></span>
+          <span id="statusText">Not signed in</span>
+        </span>
+        <button class="secondary" onclick="signOut()" id="signOutBtn" class="hidden">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="welcome">
+      <h1>Welcome</h1>
+      <p>Test your deployed User Service API</p>
+    </div>
+
+    <div class="grid">
+      <!-- Left Column: Auth -->
+      <div class="card" id="authCard">
+        <div class="card-body">
+          <div class="tabs">
+            <button class="tab active" onclick="showAuthTab('signin')">Sign in</button>
+            <button class="tab" onclick="showAuthTab('signup')">Create account</button>
+            <button class="tab" onclick="showAuthTab('confirm')">Verify</button>
+          </div>
+
+          <!-- Sign In Form -->
+          <div id="signinTab">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="signinEmail" placeholder="you@example.com">
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="signinPassword" placeholder="Enter your password">
+            </div>
+            <button onclick="signIn()">Sign in</button>
+          </div>
+
+          <!-- Sign Up Form -->
+          <div id="signupTab" class="hidden">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="signupEmail" placeholder="you@example.com">
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="signupPassword" placeholder="Min 12 chars, symbol, number">
+              <p class="hint">Must include uppercase, lowercase, number, and symbol</p>
+            </div>
+            <button onclick="signUp()">Create account</button>
+          </div>
+
+          <!-- Confirm Form -->
+          <div id="confirmTab" class="hidden">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="confirmEmail" placeholder="you@example.com">
+            </div>
+            <div class="form-group">
+              <label>Verification code</label>
+              <input type="text" id="confirmCode" placeholder="Enter 6-digit code">
+            </div>
+            <button onclick="confirmSignUp()">Verify account</button>
+          </div>
+
+          <div id="authResponse" class="response-box hidden"></div>
+        </div>
+      </div>
+
+      <!-- Right Column: Profile -->
+      <div class="profile-section">
+        <!-- Not Signed In State -->
+        <div class="card" id="emptyProfileCard">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <h3>Sign in to view your profile</h3>
+            <p>Your profile information will appear here</p>
+          </div>
+        </div>
+
+        <!-- Profile Card (shown when signed in) -->
+        <div class="card hidden" id="profileCard">
+          <div class="profile-card">
+            <div class="profile-info">
+              <div class="profile-avatar" id="profileAvatar">?</div>
+              <div class="profile-details">
+                <h3 id="profileName">Loading...</h3>
+                <p id="profileEmail">—</p>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <span class="field-label">User ID</span>
+              <span class="field-value" id="profileUserId">—</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Status</span>
+              <span class="field-value" id="profileStatus">—</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Version</span>
+              <span class="field-value" id="profileVersion">—</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Created</span>
+              <span class="field-value" id="profileCreated">—</span>
+            </div>
+
+            <div class="action-buttons">
+              <button class="secondary" onclick="getProfile()">GET /users/me</button>
+              <button onclick="showEditModal()">Edit profile</button>
+            </div>
+
+            <div id="profileResponse" class="response-box hidden" style="margin-top: 1rem;"></div>
+
+            <div class="danger-zone">
+              <h4>Danger zone</h4>
+              <p>Permanently delete your account and all associated data.</p>
+              <button class="danger" onclick="deleteAccount()">Delete account</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit Profile Card -->
+        <div class="card hidden" id="editCard">
+          <div class="card-header">
+            <h2>Edit profile</h2>
+            <p>Update your personal information</p>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>First name</label>
+              <input type="text" id="firstName" placeholder="John">
+            </div>
+            <div class="form-group">
+              <label>Last name</label>
+              <input type="text" id="lastName" placeholder="Doe">
+            </div>
+            <div class="form-group">
+              <label>Phone number</label>
+              <input type="text" id="phone" placeholder="+1 234 567 8900">
+              <p class="hint">E.164 format (e.g., +12345678900)</p>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+              <button class="secondary" onclick="hideEditModal()">Cancel</button>
+              <button onclick="updateProfile()">Save changes</button>
+            </div>
+            <div id="updateResponse" class="response-box hidden"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Token Footer -->
+    <div class="token-footer" id="tokenFooter">
+      <button class="token-toggle" id="tokenToggle" onclick="toggleTokens()">
+        <h3>Authentication Tokens</h3>
+        <span class="token-toggle-icon">▼</span>
+      </button>
+      
+      <div class="token-content" id="tokenContent">
+        <div class="token-section">
+          <div class="token-header">
+            <div class="token-label">ID Token</div>
+            <button class="token-copy" onclick="copyToken('idToken')">Copy</button>
+          </div>
+          <div class="token-value" id="idTokenValue">Sign in to view tokens</div>
+        </div>
+
+        <div class="token-section">
+          <div class="token-header">
+            <div class="token-label">Access Token</div>
+            <button class="token-copy" onclick="copyToken('accessToken')">Copy</button>
+          </div>
+          <div class="token-value" id="accessTokenValue">Sign in to view tokens</div>
+        </div>
+
+        <div class="token-section">
+          <div class="token-header">
+            <div class="token-label">Refresh Token</div>
+            <button class="token-copy" onclick="copyToken('refreshToken')">Copy</button>
+          </div>
+          <div class="token-value" id="refreshTokenValue">Sign in to view tokens</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Initialize Cognito
+    const poolData = {
+      UserPoolId: CONFIG.USER_POOL_ID,
+      ClientId: CONFIG.CLIENT_ID
+    };
+    const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+
+    let currentUser = null;
+    let idToken = null;
+    let accessToken = null;
+    let refreshToken = null;
+    let userEmail = '';
+
+    // Check for existing session
+    function checkSession() {
+      const cognitoUser = userPool.getCurrentUser();
+      if (cognitoUser) {
+        cognitoUser.getSession((err, session) => {
+          if (!err && session.isValid()) {
+            currentUser = cognitoUser;
+            idToken = session.getIdToken().getJwtToken();
+            const access = session.getAccessToken().getJwtToken();
+            const refresh = session.getRefreshToken().getToken();
+            userEmail = cognitoUser.getUsername();
+            updateAuthStatus(true, userEmail);
+            updateTokenFooter(idToken, access, refresh);
+            fetchProfileData(); // Auto-populate UI without showing response
+          }
+        });
+      }
+    }
+
+    // Update auth status UI
+    function updateAuthStatus(isAuth, email = '') {
+      const statusPill = document.getElementById('statusPill');
+      const statusText = document.getElementById('statusText');
+      const signOutBtn = document.getElementById('signOutBtn');
+      const emptyCard = document.getElementById('emptyProfileCard');
+      const profileCard = document.getElementById('profileCard');
+
+      if (isAuth) {
+        statusPill.classList.add('active');
+        statusText.textContent = 'Signed in';
+        signOutBtn.classList.remove('hidden');
+        emptyCard.classList.add('hidden');
+        profileCard.classList.remove('hidden');
+        userEmail = email;
+      } else {
+        statusPill.classList.remove('active');
+        statusText.textContent = 'Not signed in';
+        signOutBtn.classList.add('hidden');
+        emptyCard.classList.remove('hidden');
+        profileCard.classList.add('hidden');
+        document.getElementById('editCard').classList.add('hidden');
+        idToken = null;
+        currentUser = null;
+        userEmail = '';
+      }
+    }
+
+    // Show response
+    function showResponse(elementId, data, isError = false) {
+      const el = document.getElementById(elementId);
+      el.classList.remove('hidden', 'success', 'error');
+      el.classList.add(isError ? 'error' : 'success');
+      el.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    }
+
+    // Tab switching
+    function showAuthTab(tab) {
+      document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('[id$="Tab"]').forEach(t => t.classList.add('hidden'));
+      
+      event.target.classList.add('active');
+      document.getElementById(tab + 'Tab').classList.remove('hidden');
+      document.getElementById('authResponse').classList.add('hidden');
+    }
+
+    // Edit modal
+    function showEditModal() {
+      document.getElementById('editCard').classList.remove('hidden');
+    }
+
+    function hideEditModal() {
+      document.getElementById('editCard').classList.add('hidden');
+      document.getElementById('updateResponse').classList.add('hidden');
+    }
+
+    // Sign Up
+    function signUp() {
+      const email = document.getElementById('signupEmail').value;
+      const password = document.getElementById('signupPassword').value;
+
+      const attributeList = [
+        new AmazonCognitoIdentity.CognitoUserAttribute({
+          Name: 'email',
+          Value: email
+        })
+      ];
+
+      userPool.signUp(email, password, attributeList, null, (err, result) => {
+        if (err) {
+          showResponse('authResponse', { error: err.message, code: err.code }, true);
+          return;
+        }
+        showResponse('authResponse', {
+          message: 'Account created! Check your email for the verification code.',
+          userSub: result.userSub,
+          username: result.user.getUsername(),
+          userConfirmed: result.userConfirmed,
+          codeDeliveryDetails: result.codeDeliveryDetails
+        });
+        document.getElementById('confirmEmail').value = email;
+      });
+    }
+
+    // Confirm Sign Up
+    function confirmSignUp() {
+      const email = document.getElementById('confirmEmail').value;
+      const code = document.getElementById('confirmCode').value;
+
+      const cognitoUser = new AmazonCognitoIdentity.CognitoUser({
+        Username: email,
+        Pool: userPool
+      });
+
+      cognitoUser.confirmRegistration(code, true, (err, result) => {
+        if (err) {
+          showResponse('authResponse', { error: err.message, code: err.code }, true);
+          return;
+        }
+        showResponse('authResponse', {
+          message: 'Email verified! You can now sign in.',
+          result: result,
+          username: email
+        });
+        document.getElementById('signinEmail').value = email;
+        showAuthTab('signin');
+        document.querySelector('.tabs .tab').click();
+      });
+    }
+
+    // Sign In
+    function signIn() {
+      const email = document.getElementById('signinEmail').value;
+      const password = document.getElementById('signinPassword').value;
+
+      const authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails({
+        Username: email,
+        Password: password
+      });
+
+      const cognitoUser = new AmazonCognitoIdentity.CognitoUser({
+        Username: email,
+        Pool: userPool
+      });
+
+      cognitoUser.authenticateUser(authenticationDetails, {
+        onSuccess: (result) => {
+          currentUser = cognitoUser;
+          idToken = result.getIdToken().getJwtToken();
+          updateAuthStatus(true, email);
+          const accessToken = result.getAccessToken().getJwtToken();
+          const refreshToken = result.getRefreshToken().getToken();
+          showResponse('authResponse', {
+            message: 'Signed in successfully!',
+            username: email,
+            tokenType: 'Bearer',
+            idToken: idToken.substring(0, 50) + '...',
+            accessToken: accessToken.substring(0, 50) + '...',
+            refreshToken: refreshToken.substring(0, 50) + '...',
+            expiresIn: result.getIdToken().getExpiration()
+          });
+          updateTokenFooter(idToken, accessToken, refreshToken);
+          fetchProfileData(); // Auto-populate UI without showing response
+        },
+        onFailure: (err) => {
+          showResponse('authResponse', { error: err.message, code: err.code }, true);
+        },
+        newPasswordRequired: (userAttributes, requiredAttributes) => {
+          const newPassword = prompt('Please enter a new password:');
+          cognitoUser.completeNewPasswordChallenge(newPassword, {}, {
+            onSuccess: (result) => {
+              currentUser = cognitoUser;
+              idToken = result.getIdToken().getJwtToken();
+              updateAuthStatus(true, email);
+              const accessToken = result.getAccessToken().getJwtToken();
+              const refreshToken = result.getRefreshToken().getToken();
+              showResponse('authResponse', {
+                message: 'Password changed and signed in!',
+                username: email,
+                tokenType: 'Bearer',
+                idToken: idToken.substring(0, 50) + '...',
+                accessToken: accessToken.substring(0, 50) + '...',
+                refreshToken: refreshToken.substring(0, 50) + '...',
+                expiresIn: result.getIdToken().getExpiration()
+              });
+              updateTokenFooter(idToken, accessToken, refreshToken);
+              fetchProfileData(); // Auto-populate UI without showing response
+            },
+            onFailure: (err) => {
+              showResponse('authResponse', { error: err.message, code: err.code }, true);
+            }
+          });
+        }
+      });
+    }
+
+    // Sign Out
+    function signOut() {
+      const username = userEmail;
+      if (currentUser) {
+        currentUser.signOut();
+      }
+      updateAuthStatus(false);
+      clearTokenFooter();
+      showResponse('authResponse', {
+        message: 'Signed out successfully',
+        username: username,
+        action: 'LOCAL_SIGN_OUT',
+        tokensCleared: true,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // API Calls
+    async function apiCall(method, path, body = null) {
+      if (!idToken) {
+        return { error: 'Not authenticated. Please sign in first.' };
+      }
+
+      try {
+        const options = {
+          method: method,
+          headers: {
+            'Authorization': idToken,
+            'Content-Type': 'application/json'
+          }
+        };
+
+        if (body) {
+          options.body = JSON.stringify(body);
+        }
+
+        const response = await fetch(`${CONFIG.API_ENDPOINT}${path}`, options);
+        const data = await response.json();
+        
+        return { status: response.status, data };
+      } catch (err) {
+        return { error: err.message };
+      }
+    }
+
+    // Update profile UI from user data
+    function updateProfileUI(user) {
+      const initials = ((user.firstName?.[0] || '') + (user.lastName?.[0] || '') || user.email?.[0] || '?').toUpperCase();
+      document.getElementById('profileAvatar').textContent = initials;
+      
+      const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'No name set';
+      document.getElementById('profileName').textContent = name;
+      document.getElementById('profileEmail').textContent = user.email || userEmail;
+      document.getElementById('profileUserId').textContent = user.userId || '—';
+      document.getElementById('profileStatus').textContent = user.status || '—';
+      document.getElementById('profileVersion').textContent = user.version || '—';
+      document.getElementById('profileCreated').textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—';
+
+      // Pre-fill edit form
+      document.getElementById('firstName').value = user.firstName || '';
+      document.getElementById('lastName').value = user.lastName || '';
+      document.getElementById('phone').value = user.phone || '';
+    }
+
+    // Fetch profile data silently (no response shown)
+    async function fetchProfileData() {
+      const result = await apiCall('GET', '/users/me');
+      if (!result.error && result.status < 400) {
+        updateProfileUI(result.data);
+      }
+    }
+
+    // Get Profile (shows API response)
+    async function getProfile() {
+      const result = await apiCall('GET', '/users/me');
+      
+      // Show the full API response
+      showResponse('profileResponse', result, result.error || result.status >= 400);
+      
+      if (!result.error && result.status < 400) {
+        updateProfileUI(result.data);
+      }
+    }
+
+    // Update Profile
+    async function updateProfile() {
+      const body = {};
+      const firstName = document.getElementById('firstName').value;
+      const lastName = document.getElementById('lastName').value;
+      const phone = document.getElementById('phone').value;
+
+      if (firstName) body.firstName = firstName;
+      if (lastName) body.lastName = lastName;
+      if (phone) body.phone = phone;
+
+      if (Object.keys(body).length === 0) {
+        showResponse('updateResponse', { error: 'Please fill at least one field' }, true);
+        return;
+      }
+
+      const result = await apiCall('PUT', '/users/me', body);
+      
+      // Always show full response
+      showResponse('updateResponse', result, result.error || result.status >= 400);
+      
+      // Update UI if successful
+      if (!result.error && result.status < 400) {
+        updateProfileUI(result.data);
+      }
+    }
+
+    // Delete Account
+    async function deleteAccount() {
+      if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        return;
+      }
+      const result = await apiCall('DELETE', '/users/me');
+      
+      // Always show full response
+      showResponse('profileResponse', result, result.error || result.status >= 400);
+      
+      if (!result.error && result.status < 400) {
+        setTimeout(() => signOut(), 2000);
+      }
+    }
+
+    // Toggle token section
+    function toggleTokens() {
+      const toggle = document.getElementById('tokenToggle');
+      const content = document.getElementById('tokenContent');
+      toggle.classList.toggle('expanded');
+      content.classList.toggle('show');
+    }
+
+    // Update token footer
+    function updateTokenFooter(id, access, refresh) {
+      idToken = id;
+      accessToken = access;
+      refreshToken = refresh;
+      
+      document.getElementById('idTokenValue').textContent = id || 'Sign in to view tokens';
+      document.getElementById('idTokenValue').classList.toggle('empty', !id);
+      
+      document.getElementById('accessTokenValue').textContent = access || 'Sign in to view tokens';
+      document.getElementById('accessTokenValue').classList.toggle('empty', !access);
+      
+      document.getElementById('refreshTokenValue').textContent = refresh || 'Sign in to view tokens';
+      document.getElementById('refreshTokenValue').classList.toggle('empty', !refresh);
+    }
+
+    // Clear token footer
+    function clearTokenFooter() {
+      updateTokenFooter(null, null, null);
+    }
+
+    // Copy token to clipboard
+    async function copyToken(type) {
+      let token;
+      if (type === 'idToken') token = idToken;
+      else if (type === 'accessToken') token = accessToken;
+      else if (type === 'refreshToken') token = refreshToken;
+      
+      if (!token) return;
+      
+      try {
+        await navigator.clipboard.writeText(token);
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = originalText, 1500);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+
+    // Initialize
+    checkSession();
+  </script>
+</body>
+</html>
